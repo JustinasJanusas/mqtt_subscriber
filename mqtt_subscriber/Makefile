@@ -9,7 +9,7 @@ include $(INCLUDE_DIR)/package.mk
 define Package/mqtt_subscriber
 	CATEGORY:=Base system
 	TITLE:=mqtt_subscriber
-	DEPENDS:=+libmosquitto-ssl +libuci +libcurl +libjson-c +sqlite3-cli
+	DEPENDS:=+libmosquitto-ssl +libuci +libcurl +libjson-c +libsqlite3
 endef
 
 define Package/mqtt_subscriber/description

@@ -14,6 +14,7 @@ const char *argp_program_version =  "mqtt_subscriber 1.0.0";
 const char *argp_program_bug_address =  "<bug-gnu-utils@gnu.org>";
 static char doc[] = "iot subscriber -- subscribes to topics and reacts to events";
 
+enum operator { eq, ne, gt, lt, ge, le };
 
 static struct argp_option options[] = {
     {"host",  'h', "host", 0, "Broker address" },

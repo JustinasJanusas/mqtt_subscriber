@@ -62,7 +62,7 @@ int send_mail(char *sender, char* receivers, char *text){
   if(curl) {
     syslog(LOG_DEBUG, "CREATED!");
     /* This is the URL for your mailserver */
-    curl_easy_setopt(curl, CURLOPT_URL, "smtp://smtp.freesmtpservers.com:25");
+    curl_easy_setopt(curl, CURLOPT_URL, "smtps://smtp.freesmtpservers.com:25");
 
     /* Note that this option is not strictly required, omitting it will result
      * in libcurl sending the MAIL FROM command with empty sender data. All
@@ -76,10 +76,11 @@ int send_mail(char *sender, char* receivers, char *text){
     /* Add two recipients, in this particular case they correspond to the
      * To: and Cc: addressees in the header, but they could be any kind of
      * recipient. */
+    char error[500];
     recipients = curl_slist_append(recipients, TO_ADDR);
     recipients = curl_slist_append(recipients, CC_ADDR);
     curl_easy_setopt(curl, CURLOPT_MAIL_RCPT, recipients);
-
+    curl_easy_setopt ( curl, CURLOPT_ERRORBUFFER, error );
     /* We are using a callback function to specify the payload (the headers and
      * body of the message). You could just use the CURLOPT_READDATA option to
      * specify a FILE pointer to read from. */
@@ -89,10 +90,11 @@ int send_mail(char *sender, char* receivers, char *text){
 
     /* Send the message */
     res = curl_easy_perform(curl);
-
+    syslog(LOG_DEBUG, "yo %d", res);
+    syslog(LOG_DEBUG, error);
     /* Check for errors */
     if(res != CURLE_OK)
-      fprintf(stderr, "curl_easy_perform() failed: %s\n",
+      syslog(LOG_ERR, "curl_easy_perform() failed: %s\n",
               curl_easy_strerror(res));
 
     /* Free the list of recipients */
