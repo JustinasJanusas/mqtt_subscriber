@@ -105,23 +105,5 @@ void uci_parse(struct uci_context *context, struct uci_package *package,
                 add_new_event_node(event_head, event_tmp);
             }
         }
-        /*uci_foreach_element(&section->options, j){
-            
-            struct uci_option *option = uci_to_option(j);
-            char *option_name = option->e.name;
-            if ( option->type == UCI_TYPE_STRING ){
-                if( !strcmp(option_name, "topic") ){
-                    strncpy(name, option->v.string, 40);
-                }
-                else if( !strcmp(option_name, "qos") ){
-                    qos = atoi(option->v.string);
-                }
-            }
-                
-        }
-        if( name && ( qos || qos == 0 ) ){
-            tmp = create_topic_node(name, qos);
-            add_new_topic_node(head, tmp);
-        }*/
     }
 }

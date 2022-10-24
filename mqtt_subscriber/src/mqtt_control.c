@@ -1,16 +1,12 @@
 #include "mqtt_control.h"
 
 
-#define CA_FILE "/etc/certificates/cert.cert.pem"
-#define CLIENT_CERT "/etc/certificates/mqtt_subscriber.cert.pem"
-#define CLIENT_KEY "/etc/certificates/mqtt_subscriber.key.pem"
-
 static void on_message(struct mosquitto *mosq, void *obj, const struct mosquitto_message *msg)
 {
     syslog(LOG_INFO, "Message received: %s", (char *) msg->payload);
-    fprintf(stdout, "%s\n", (char *) msg->payload);
-    fflush(stdout);
-
+    int rc = write_to_log( (char *) msg->topic, (char *) msg->payload);
+    if( rc )
+        syslog(LOG_ERR, "Failed to save message to log: %d", rc);
 }
 
 static void mosquitto_log_callback(struct mosquitto *mosq, void *userdata, int level, 
@@ -31,7 +27,7 @@ static void mosquitto_log_callback(struct mosquitto *mosq, void *userdata, int l
 }
 
 int setup_mqtt(struct mosquitto **mosq, char *address, int port, char *username,
-                char *password)
+                char *password, char *ca_file, int use_tls)
 {
     int rc = 0;
     mosquitto_lib_init();
@@ -49,10 +45,12 @@ int setup_mqtt(struct mosquitto **mosq, char *address, int port, char *username,
             goto error_destroy;
         }
     }
-    rc = mosquitto_tls_set(*mosq, CA_FILE, NULL, CLIENT_CERT, CLIENT_KEY, NULL);
-    if( rc ){
-        syslog(LOG_ERR, "Failed to set TLS: %d", rc);
-        goto error_destroy;
+    if( use_tls ){
+        rc = mosquitto_tls_set(*mosq, ca_file, NULL, NULL, NULL, NULL);
+        if( rc ){
+            syslog(LOG_ERR, "Failed to set TLS: %d", rc);
+            goto error_destroy;
+        }
     }
     rc = mosquitto_connect(*mosq, address, port, 60);
     if( rc ){

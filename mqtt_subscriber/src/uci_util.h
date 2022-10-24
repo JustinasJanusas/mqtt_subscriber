@@ -1,10 +1,7 @@
 #include <uci.h>
 #include <stdio.h>
-#include "linked_list.h"
+#include "mail_util.h"
 
-struct uci_topic{
-    
-};
 
 int uci_setup(struct uci_context **context,
             struct uci_package **package, char * config_name);

@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+
 struct topic_node {
     char name[40];
     int qos;
