@@ -1,12 +1,11 @@
 #include <signal.h>
 #include <unistd.h>
 #include <argp.h>
-#include "event_handler.h"
 
+#include "mqtt_control.h"
 
 #define CONFIG_NAME "mqtt_subscriber"
 #define FILE_PATH "/tmp/subscribe.txt"
-
 
 volatile sig_atomic_t deamonize = 1;
 
@@ -14,7 +13,6 @@ const char *argp_program_version =  "mqtt_subscriber 1.0.0";
 const char *argp_program_bug_address =  "<bug-gnu-utils@gnu.org>";
 static char doc[] = "iot subscriber -- subscribes to topics and reacts to events";
 
-enum operator { eq, ne, gt, lt, ge, le };
 
 static struct argp_option options[] = {
     {"host",  'h', "host", 0, "Broker address" },
@@ -102,16 +100,13 @@ int main(int argc, char **argv)
 		syslog(LOG_ERR, "uci setup failed");
 		goto end_close_log;
 	}
+	
 	uci_parse(context, package, &head, &event_head);
 	if( head == NULL )
 		goto end_free_context;
-
-	//email
-	rc = send_mail(event_head->email, event_head->receivers, "this is text");
-	if( rc ){
-		syslog(LOG_DEBUG, "WHYRRRRME??? %d %d", rc);
-		//goto end_free_context;
-	}
+	set_event_head(&event_head);
+	//json
+	//check_for_events(NULL, NULL);
 
 	//connect to broker
     rc = setup_mqtt(&mosq, arguments.host, arguments.port, arguments.username,

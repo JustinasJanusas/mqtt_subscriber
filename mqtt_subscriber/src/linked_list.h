@@ -2,6 +2,9 @@
 #include <stdlib.h>
 #include <string.h>
 
+enum operator { eq, ne, gt, lt, ge, le };
+
+extern char *operator_strings[];
 
 struct topic_node {
     char name[40];
@@ -12,15 +15,15 @@ struct event_node{
     char topic[40];
     char parameter[20];
     int type;
-    char operator[2];
+    enum operator operator;
     char expected_value[20];
     char email[40];
-    char receivers[200];
+    char receiver[40];
     struct event_node *next;
 };
 
 struct event_node* create_event_node(char *topic, char *parameter, int type,
-                                    char *operator, char *expected_value,
+                                    int operator, char *expected_value,
                                     char *email, char *receivers);
 struct topic_node* create_topic_node(char *name, int qos);
 void add_new_topic_node(struct topic_node **head, struct topic_node *new_node);

@@ -1,6 +1,6 @@
 #include <mosquitto.h>
+#include "event_handler.h"
 
-#include "log_util.h"
 
 
 int setup_mqtt(struct mosquitto **mosq, char *address, int port, char *username,

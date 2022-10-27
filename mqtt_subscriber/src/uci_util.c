@@ -19,39 +19,6 @@ int uci_setup(struct uci_context **context,
     return 0;
 }
 
-static char *uci_list_to_string(struct uci_list *list)
-{
-    size_t max_size = 100;
-    size_t current_size = 1;    // This includes the null terminator
-    char *result = calloc(max_size, sizeof(char));
-    struct uci_element *i;
-
-    uci_foreach_element(list, i)
-    {
-        // +2 for ", " after each list element
-        size_t element_length = strlen(i->name) + 2;
-        char name[element_length + 2];
-        strcpy(name, i->name);
-
-        if (current_size + element_length > max_size)
-        {
-            max_size = max_size * 2 + element_length;
-            result = realloc(result, sizeof(char) * max_size);
-        }
-
-        strcat(result, strcat(name, ", "));
-        current_size += element_length;
-    }
-
-    // Remove trailing ", "
-    if (current_size >= 3)
-        result[current_size - 3] = '\0';
-    else
-        result[0] = '\0';
-
-    return result;
-}
-
 void uci_parse(struct uci_context *context, struct uci_package *package, 
                 struct topic_node **head, struct event_node **event_head)
 {
@@ -67,11 +34,10 @@ void uci_parse(struct uci_context *context, struct uci_package *package,
     char topic[40];
     char parameter[20];
     int type;
-    char operator[2];
+    int operator;
     char expected_value[20];
     char email[40];
-    char receivers[200];
-
+    char receiver[40];
     uci_foreach_element(&package->sections, i){
         struct uci_section *section = uci_to_section(i);
         char *section_type = section->type;
@@ -89,19 +55,19 @@ void uci_parse(struct uci_context *context, struct uci_package *package,
             strncpy(parameter, 
                     uci_lookup_option(context, section, "parameter")->v.string, 20);
             type = atoi(uci_lookup_option(context, section, "type")->v.string);
-            strncpy(operator, 
-                    uci_lookup_option(context, section, "operator")->v.string, 2);
+            operator = atoi(uci_lookup_option(context, section, "operator")->v.string);
             strncpy(expected_value, 
                     uci_lookup_option(context, section, "expected_value")->v.string, 
                     20);
             strncpy(email, uci_lookup_option(context, section, "email")->v.string,
                     40);
-            strncpy(receivers, uci_lookup_option(context, section, "receivers")->v.string,
-                    200);
-            if( topic && parameter && ( type || type == 0 )  && operator &&
-                expected_value && email && receivers){
+            strncpy(receiver, uci_lookup_option(context, section, "receiver")->v.string,
+                    40);
+            if( topic && parameter && ( type || type == 0 )  && 
+                (operator || operator == 0 ) &&
+                expected_value && email && receiver){
                 event_tmp = create_event_node(topic, parameter, type, operator,
-                                            expected_value, email, receivers);
+                                            expected_value, email, receiver);
                 add_new_event_node(event_head, event_tmp);
             }
         }

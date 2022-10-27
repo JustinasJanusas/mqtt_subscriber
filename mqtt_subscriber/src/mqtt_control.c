@@ -7,6 +7,7 @@ static void on_message(struct mosquitto *mosq, void *obj, const struct mosquitto
     int rc = write_to_log( (char *) msg->topic, (char *) msg->payload);
     if( rc )
         syslog(LOG_ERR, "Failed to save message to log: %d", rc);
+    check_for_events(msg->topic, msg->payload);
 }
 
 static void mosquitto_log_callback(struct mosquitto *mosq, void *userdata, int level, 
@@ -41,7 +42,6 @@ int setup_mqtt(struct mosquitto **mosq, char *address, int port, char *username,
     if( strlen(username) > 0 && strlen(password) > 0 ){
         rc = mosquitto_username_pw_set(*mosq, username, password);
         if(rc){
-            syslog(LOG_DEBUG, "Failed to set the authentication data");
             goto error_destroy;
         }
     }

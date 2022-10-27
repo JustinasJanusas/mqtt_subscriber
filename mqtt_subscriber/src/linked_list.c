@@ -1,5 +1,7 @@
 #include "linked_list.h"
 
+char *operator_strings[] = { "==", "!=", ">", "<",  ">=", "<="};
+
 struct topic_node* create_topic_node(char *name, int qos)
 {
     struct topic_node *node;
@@ -10,8 +12,8 @@ struct topic_node* create_topic_node(char *name, int qos)
     return node;
 }
 struct event_node* create_event_node(char *topic, char *parameter, int type,
-                                    char *operator, char *expected_value,
-                                    char *email, char *receivers)
+                                    int operator, char *expected_value,
+                                    char *email, char *receiver)
 {
     struct event_node *node;
     node = (struct event_node*) malloc(sizeof(struct event_node));
@@ -19,10 +21,11 @@ struct event_node* create_event_node(char *topic, char *parameter, int type,
     strncpy(node->topic, topic, 40);
     strncpy(node->parameter, parameter, 20);
     node->type = type;
-    strncpy(node->operator, operator, 2);
+    node->operator = operator;
     strncpy(node->expected_value, expected_value, 20);
     strncpy(node->email, email, 40);
-    strncpy(node->receivers, receivers, 200);
+    strncpy(node->receiver, receiver, 40);
+    
     return node;
 }
 
@@ -56,29 +59,19 @@ void add_new_event_node(struct event_node **head, struct event_node *new_node)
 
 void free_all_topic_nodes(struct topic_node **head)
 {
-    struct topic_node *tmp;
-    tmp = *head;
-    struct topic_node *delete;
-    while( tmp->next != NULL){
-        delete = tmp;
-        tmp = tmp->next;
-        free(delete);
-    }
-    if( tmp ){
-        free(tmp);
+    struct topic_node *to_delete;
+    while (*head != NULL) {
+        to_delete = *head;
+        *head = (*head)->next;
+        free(to_delete);
     }
 }
 void free_all_event_nodes(struct event_node **head)
 {
-    struct event_node *tmp;
-    tmp = *head;
-    struct event_node *delete;
-    while( tmp->next != NULL){
-        delete = tmp;
-        tmp = tmp->next;
-        free(delete);
-    }
-    if( tmp ){
-        free(tmp);
+    struct event_node *to_delete;
+    while (*head != NULL) {
+        to_delete = *head;
+        *head = (*head)->next;
+        free(to_delete);
     }
 }
