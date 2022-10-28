@@ -1,5 +1,7 @@
 #include "event_handler.h"
 
+#define EMAIL_CONFIG "user_groups"
+
 struct event_node **head;
 
 static int check_char(const char *var, enum operator operator, char *val)
@@ -43,8 +45,6 @@ void set_event_head(struct event_node **event_head)
     head = event_head;
 }
 
-
-
 void check_for_events(char *topic, char *message)
 {
     struct event_node *tmp;
@@ -54,8 +54,7 @@ void check_for_events(char *topic, char *message)
     json_object *j;
     int check = 0;
     int rc = 0;
-    while ( tmp != NULL )
-    {
+    while ( tmp != NULL ){
         if( !strcmp(tmp->topic, topic) ){
             j = json_object_object_get(jobj, tmp->parameter);
             if(j){
@@ -70,12 +69,34 @@ void check_for_events(char *topic, char *message)
                                 atoi(tmp->expected_value));
                 }
                 if(check){
-                    rc = send_mail(tmp->email, tmp->receiver, tmp->topic, 
+                    struct sender *sender = (struct sender *)malloc(sizeof(struct sender));
+                    struct uci_context *context;
+                    struct uci_package *package;
+                    int rc = 0;
+                    rc = uci_setup(&context, &package, EMAIL_CONFIG);
+                    if( rc ){
+                        syslog(LOG_ERR, "Failed to setup qmail config");
+                        if( context )
+                            uci_free_context(context);
+                        goto free_pointer;
+                    }
+                    rc = uci_get_sender_info(context, package, &sender, tmp->email);
+                    if( rc ){
+                        syslog(LOG_ERR, "Didn't find email params in config");
+                        goto free_context;
+                    }
+                    rc = send_mail(sender, tmp->receiver, tmp->topic, 
                                     tmp->parameter, tmp->expected_value, tmp->operator);
-                    if( rc )
-                        syslog(LOG_ERR, "Event happened but failed to send an email");
-                    else
-                        syslog(LOG_INFO, "Event happened and an email has been sent");
+                    syslog(LOG_DEBUG, "PREFREE");
+                    free_context:
+                        uci_free_context(context);
+                    free_pointer:
+                        free(sender);
+                    
+                        if( rc )
+                            syslog(LOG_ERR, "Event happened but failed to send an email");
+                        else
+                            syslog(LOG_INFO, "Event happened and an email has been sent");
                 }
             }
         }

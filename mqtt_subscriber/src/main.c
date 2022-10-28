@@ -113,14 +113,17 @@ int main(int argc, char **argv)
 					arguments.password, arguments.ca_file, arguments.use_tls);
     if( rc )
         goto end_free_context;
+
 	rc = subscribe_to_topics(mosq, head);
 	if( rc )
 		goto end_destroy_mosquitto;
+
 	rc = init_log();
 	if( rc ){
 		syslog(LOG_ERR, "Failed to initiate log: %d", rc);
 		goto end_destroy_mosquitto;
 	}
+	
 	rc = mosquitto_loop_start(mosq);
     if( rc ){
         syslog(LOG_ERR, "Failed to start loop: %d", rc);

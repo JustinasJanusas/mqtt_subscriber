@@ -10,18 +10,20 @@ struct upload_status {
 static void build_message(char *topic, char *argument, char *expected_value,
                     enum operator operator, char *sender, char *receiver)
 {
-  
-
-  sprintf(payload_text, "Date: Mon, 29 Nov 2010 21:54:29 +1100\r\n"
+   
+  time_t t = time(NULL);
+  struct tm tm = *localtime(&t);
+  sprintf(payload_text, "Date: %d-%02d-%02d %02d:%02d:%02d\r\n"
           "To: %s\r\n"
           "From: %s\r\n"
           "Cc: \r\n"
           "Message-ID: <dcd7cb36-11db-487a-9f3a-e652a9458efd@"
           "rfcpedant.example.org>\r\n"
           "Subject: \"%s\" topic event\r\n"
-          "\r\n" /* empty line to divide headers from body, see RFC5322 */
+          "\r\n" 
           "Event: %s %s %s.\r\n"
-          "\r\n", sender, receiver, topic, argument, 
+          "\r\n", tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday, tm.tm_hour, 
+                  tm.tm_min, tm.tm_sec, receiver, sender, topic, argument, 
                                 operator_strings[operator], expected_value);
 }
 
@@ -30,81 +32,73 @@ static size_t payload_source(char *ptr, size_t size, size_t nmemb, void *userp)
   struct upload_status *upload_ctx = (struct upload_status *)userp;
   const char *data;
   size_t room = size * nmemb;
+ 
   if((size == 0) || (nmemb == 0) || ((size*nmemb) < 1)) {
     return 0;
   }
+ 
   data = &payload_text[upload_ctx->bytes_read];
-  FILE *f = fopen("/tmp/why.txt", "w");
-  fprintf(f, payload_text);
-  fclose(f);
-  if(payload_text) {
-    size_t len = strlen(payload_text);
-    
+ 
+  if(data) {
+    size_t len = strlen(data);
     if(room < len)
       len = room;
-    memcpy(ptr, payload_text, len);
+    memcpy(ptr, data, len);
     upload_ctx->bytes_read += len;
-
+ 
     return len;
   }
+ 
   return 0;
 }
 
-
-int send_mail(char *sender, char* receiver, char *topic, char *argument, 
-              char *expected_value, enum operator operator){
+int send_mail(struct sender *sender, char* receiver, char *topic, char *argument, 
+              char *expected_value, enum operator operator)
+{
+  build_message(topic, argument, expected_value, operator, sender->email, receiver);
   CURL *curl;
-  CURLcode res = CURLE_COULDNT_CONNECT;
+  CURLcode res = CURLE_OK;
   struct curl_slist *recipients = NULL;
   struct upload_status upload_ctx = { 0 };
-
+    char server[60] = "smtp://";
   curl = curl_easy_init();
   if(curl) {
-    /* This is the URL for your mailserver */
-    curl_easy_setopt(curl, CURLOPT_URL, "smtp://smtp.freesmtpservers.com");
-    curl_easy_setopt(curl, CURLOPT_PORT, 25);
-    /* Note that this option is not strictly required, omitting it will result
-     * in libcurl sending the MAIL FROM command with empty sender data. All
-     * autoresponses should have an empty reverse-path, and should be directed
-     * to the address in the reverse-path which triggered them. Otherwise,
-     * they could cause an endless loop. See RFC 5321 Section 4.5.5 for more
-     * details.
-     */
-    curl_easy_setopt(curl, CURLOPT_MAIL_FROM, sender);
-    /* Add two recipients, in this particular case they correspond to the
-     * To: and Cc: addressees in the header, but they could be any kind of
-     * recipient. */
-    char error[500];
-    recipients = curl_slist_append(recipients, receiver);
-    //recipients = curl_slist_append(recipients, CC_ADDR);
-    curl_easy_setopt(curl, CURLOPT_MAIL_RCPT, recipients);
-    curl_easy_setopt ( curl, CURLOPT_ERRORBUFFER, error );
-    /* We are using a callback function to specify the payload (the headers and
-     * body of the message). You could just use the CURLOPT_READDATA option to
-     * specify a FILE pointer to read from. */
-    curl_easy_setopt(curl, CURLOPT_READFUNCTION, payload_source);
-    build_message(topic, argument, expected_value, operator, sender, receiver);
-    curl_easy_setopt(curl, CURLOPT_READDATA, &payload_text);
-    curl_easy_setopt(curl, CURLOPT_UPLOAD, 1L);
+    if(sender->credentials_enabled){
+        curl_easy_setopt(curl, CURLOPT_USERNAME, sender->username);
+        curl_easy_setopt(curl, CURLOPT_PASSWORD, sender->password);
+    }
+    strcat(server, sender->smtp_server);
 
-    /* Send the message */
+    curl_easy_setopt(curl, CURLOPT_URL, server);
+    curl_easy_setopt(curl, CURLOPT_PORT, sender->smtp_port);
+
+    syslog(LOG_DEBUG, "pre ssl");
+    if( sender->secure_conn ){
+      curl_easy_setopt(curl, CURLOPT_USE_SSL, (long)CURLUSESSL_ALL);
+      curl_easy_setopt(curl, CURLOPT_CAPATH, "/etc/certificates/");
+    }
+
+    syslog(LOG_DEBUG, "POST ssl");
+    curl_easy_setopt(curl, CURLOPT_MAIL_FROM, sender->email);
+
+    recipients = curl_slist_append(recipients, receiver);
+    curl_easy_setopt(curl, CURLOPT_MAIL_RCPT, recipients);
+ 
+    curl_easy_setopt(curl, CURLOPT_READFUNCTION, payload_source);
+    curl_easy_setopt(curl, CURLOPT_READDATA, &upload_ctx);
+    curl_easy_setopt(curl, CURLOPT_UPLOAD, 1L);
+ 
+
     res = curl_easy_perform(curl);
-    /* Check for errors */
+ 
     if(res != CURLE_OK)
-      syslog(LOG_ERR, "curl_easy_perform() failed: %s\n",
-              curl_easy_strerror(res));
-    /* Free the list of recipients */
+      syslog(LOG_ERR, "curl_easy_perform() failed: %s %d\n",
+              curl_easy_strerror(res), res);
+ 
     curl_slist_free_all(recipients);
-    
-    /* curl will not send the QUIT command until you call cleanup, so you
-     * should be able to re-use this connection for additional messages
-     * (setting CURLOPT_MAIL_FROM and CURLOPT_MAIL_RCPT as required, and
-     * calling curl_easy_perform() again. It may not be a good idea to keep
-     * the connection open for a very long time though (more than a few
-     * minutes may result in the server timing out the connection), and you do
-     * want to clean up in the end.
-     */
+ 
     curl_easy_cleanup(curl);
   }
+ 
   return (int)res;
 }
