@@ -129,8 +129,7 @@ int uci_get_sender_info(struct uci_context *context, struct uci_package *package
                                                                 "secure_conn")->v.string);
                 (*sender)->credentials_enabled = atoi(uci_lookup_option(context, section,
                                                                 "credentials")->v.string);
-                if( (*sender)->credentials_enabled )
-                {
+                if( (*sender)->credentials_enabled ){
                     strncpy((*sender)->username, uci_lookup_option(context, section,
                                                                 "username")->v.string, 50);
                     strncpy((*sender)->password, uci_lookup_option(context, section,

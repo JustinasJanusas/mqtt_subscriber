@@ -49,11 +49,13 @@ int setup_email_config()
     rc = uci_setup(&context, &package, EMAIL_CONFIG);
     if( rc ){
         syslog(LOG_ERR, "Failed to setup email config");
-        if( context )
+        if( context ){
             uci_free_context(context);
+        }
     }
     return rc;
 }
+
 void free_email_config()
 {
     uci_free_context(context);
@@ -73,7 +75,7 @@ void check_for_events(char *topic, char *message)
     json_object *j;
     int check = 0;
     int rc = 0;
-    
+
     while ( tmp != NULL ){
         if( !strcmp(tmp->topic, topic) ){
             j = json_object_object_get(jobj, tmp->parameter);
@@ -103,10 +105,12 @@ void check_for_events(char *topic, char *message)
                     free_sender_pointer:
                         free(sender);
                     
-                        if( rc )
+                        if( rc ){
                             syslog(LOG_ERR, "Event happened but failed to send an email");
-                        else
+                        }
+                        else{
                             syslog(LOG_INFO, "Event happened and an email has been sent");
+                        }
                 }
             }
         }

@@ -39,8 +39,9 @@ static size_t payload_source(char *ptr, size_t size, size_t nmemb, void *userp)
  
   if(data) {
     size_t len = strlen(data);
-    if(room < len)
+    if(room < len){
       len = room;
+    }
     memcpy(ptr, data, len);
     upload_ctx->bytes_read += len;
  
@@ -87,10 +88,10 @@ int send_mail(struct sender *sender, char* receiver, char *topic, char *argument
 
     res = curl_easy_perform(curl);
  
-    if(res != CURLE_OK)
+    if(res != CURLE_OK){
       syslog(LOG_ERR, "curl_easy_perform() failed: %s %d\n",
               curl_easy_strerror(res), res);
- 
+    }
     curl_slist_free_all(recipients);
  
     curl_easy_cleanup(curl);

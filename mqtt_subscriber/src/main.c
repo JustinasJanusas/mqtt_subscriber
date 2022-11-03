@@ -102,23 +102,27 @@ int main(int argc, char **argv)
 	}
 	
 	uci_parse(context, package, &head, &event_head);
-	if( head == NULL )
+	if( head == NULL ){
 		goto end_free_context;
+	}
 	set_event_head(&event_head);
 
 	rc = setup_email_config();
-	if( rc )
+	if( rc ){
 		goto end_free_context;
+	}
 
 	//connect to broker
     rc = setup_mqtt(&mosq, arguments.host, arguments.port, arguments.username,
 					arguments.password, arguments.ca_file, arguments.use_tls);
-    if( rc )
+    if( rc ){
         goto end_free_email_context;
+	}
 
 	rc = subscribe_to_topics(mosq, head);
-	if( rc )
+	if( rc ){
 		goto end_destroy_mosquitto;
+	}
 
 	rc = init_log();
 	if( rc ){

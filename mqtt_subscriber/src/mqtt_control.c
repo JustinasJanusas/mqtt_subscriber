@@ -5,8 +5,9 @@ static void on_message(struct mosquitto *mosq, void *obj, const struct mosquitto
 {
     syslog(LOG_INFO, "Message received: %s", (char *) msg->payload);
     int rc = write_to_log( (char *) msg->topic, (char *) msg->payload);
-    if( rc )
+    if( rc ){
         syslog(LOG_ERR, "Failed to save message to log: %d", rc);
+    }
     check_for_events(msg->topic, msg->payload);
 }
 
@@ -67,8 +68,9 @@ int setup_mqtt(struct mosquitto **mosq, char *address, int port, char *username,
 
 int subscribe_to_topics(struct mosquitto *mosq, struct topic_node *head)
 {
-    if( head == NULL )
+    if( head == NULL ){
         return 1;
+    }
     int rc = 0;
     struct topic_node *tmp = head;
     while( tmp != NULL ){
