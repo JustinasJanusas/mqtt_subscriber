@@ -7,6 +7,7 @@
 int uci_setup(struct uci_context **context,
             struct uci_package **package, char * config_name)
 {
+    printf("VV\n");
     int rc = 0;
     *context = uci_alloc_context();
     if( !(*context) ){

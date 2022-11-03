@@ -39,7 +39,7 @@ int setup_mqtt(struct mosquitto **mosq, char *address, int port, char *username,
     }
     mosquitto_log_callback_set(*mosq, mosquitto_log_callback);
     mosquitto_message_callback_set(*mosq, on_message);
-    if( strlen(username) > 0 && strlen(password) > 0 ){
+    if( username ){
         rc = mosquitto_username_pw_set(*mosq, username, password);
         if(rc){
             goto error_destroy;

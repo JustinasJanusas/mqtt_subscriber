@@ -20,7 +20,7 @@ static struct argp_option options[] = {
 	{"username", 'u', "username", 0, "Username"},
 	{"password", 'P', "password", 0, "Password"},
 	{"ca_file", 'c', "ca_file", 0, "CA file"}, 
-	{"use_tls", 't', "use_tls", 0, "Use TLS"},
+	{"use_tls", 't', 0, ARGP_NO_ARGS, "Use TLS"},
     { 0 }
 };
 
@@ -37,6 +37,7 @@ struct arguments{
 
 static error_t parse_opt (int key, char *arg, struct argp_state *state)
 {
+	syslog(LOG_DEBUG, "%c\n", key);
 	struct arguments *arguments = state->input;
 	switch ( key ){
 
@@ -56,7 +57,7 @@ static error_t parse_opt (int key, char *arg, struct argp_state *state)
 			arguments->ca_file = arg;
 			break;
 		case 't':
-			arguments->use_tls = atoi(arg);
+			arguments->use_tls = 1;
 			break;
 		default:
 			return ARGP_ERR_UNKNOWN;

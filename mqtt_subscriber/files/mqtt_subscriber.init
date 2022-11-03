@@ -9,16 +9,19 @@ start_service() {
 
 		if [ "$enabled" -eq 1 ]; then
 			config_get host mqtt_subscriber_sct 'host' ''
-			config_get port mqtt_subscriber_sct 'port' ''
+			config_get port mqtt_subscriber_sct 'port' '1883'
 			config_get username mqtt_subscriber_sct 'username' ''
 			config_get password mqtt_subscriber_sct	'password' ''
 			config_get ca_file mqtt_subscriber_sct 'ca_file' ''
 			config_get use_tls mqtt_subscriber_sct 'use_tls' '0'
-			config_get email mqtt_subscriber_sct 'email' ''
 			procd_open_instance
-			procd_set_param command /usr/bin/mqtt_subscriber -h "$host" -p "$port" \
-									-u "$username" -P "$password" -c "$ca_file" \
-									-t "$use_tls"
+			procd_set_param command /usr/bin/mqtt_subscriber -h "$host" -p "$port"
+			if [ "$username" != '' ]; then
+				procd_append_param command -u "$username" -P "$password"
+			fi
+			if [ "$use_tls" -eq 1 ]; then
+				procd_append_param command -t -c "$ca_file"
+			fi
 			procd_set_param file /etc/config/mqtt_subscriber
 			procd_close_instance
 		fi
