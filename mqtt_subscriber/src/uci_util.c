@@ -7,22 +7,18 @@
 int uci_setup(struct uci_context **context,
             struct uci_package **package, char * config_name)
 {
-    syslog(LOG_DEBUG, "UCIS 1");
     int rc = 0;
-    syslog(LOG_DEBUG, "UCIS 2");
     *context = uci_alloc_context();
-    syslog(LOG_DEBUG, "UCIS 3");
     if( !(*context) ){
 		syslog(LOG_ERR, "Failed to create uci context");
         return 1;
 	}
-    syslog(LOG_DEBUG, "UCIS 4");
+
     rc = uci_load(*context, config_name, package);
     if( rc ){
         syslog(LOG_ERR, "Failed to load config file: %d", rc);
         return rc;
     }
-    syslog(LOG_DEBUG, "UCIS 5");
     return 0;
 }
 

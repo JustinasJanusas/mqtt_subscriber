@@ -11,6 +11,7 @@ struct topic_node* create_topic_node(char *name, int qos)
     node->qos = qos;
     return node;
 }
+
 struct event_node* create_event_node(char *topic, char *parameter, int type,
                                     int operator, char *expected_value,
                                     char *email, char *receiver)

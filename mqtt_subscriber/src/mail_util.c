@@ -72,13 +72,11 @@ int send_mail(struct sender *sender, char* receiver, char *topic, char *argument
     curl_easy_setopt(curl, CURLOPT_URL, server);
     curl_easy_setopt(curl, CURLOPT_PORT, sender->smtp_port);
 
-    syslog(LOG_DEBUG, "pre ssl");
     if( sender->secure_conn ){
       curl_easy_setopt(curl, CURLOPT_USE_SSL, (long)CURLUSESSL_ALL);
       curl_easy_setopt(curl, CURLOPT_CAPATH, "/etc/certificates/");
     }
 
-    syslog(LOG_DEBUG, "POST ssl");
     curl_easy_setopt(curl, CURLOPT_MAIL_FROM, sender->email);
 
     recipients = curl_slist_append(recipients, receiver);

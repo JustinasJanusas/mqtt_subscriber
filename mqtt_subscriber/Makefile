@@ -2,14 +2,14 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mqtt_subscriber
 PKG_RELEASE:=1
-PKG_VERSION:=1.0
+PKG_VERSION:=1.0.0
 
 include $(INCLUDE_DIR)/package.mk
 
 define Package/mqtt_subscriber
 	CATEGORY:=Base system
 	TITLE:=mqtt_subscriber
-	DEPENDS:=+libmosquitto-ssl +libuci +libcurl +libjson-c +libsqlite3
+	DEPENDS:=+libmosquitto-ssl +libuci +libcurl +libjson-c +libsqlite3 +valgrind
 endef
 
 define Package/mqtt_subscriber/description

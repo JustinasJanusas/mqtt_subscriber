@@ -26,6 +26,7 @@ start_service() {
 
 service_triggers() {
 	procd_add_reload_trigger "mqtt_subscriber"
+	procd_add_reload_trigger "user_groups"
 }
 
 reload_service() {

@@ -1,5 +1,5 @@
 BIN:=mqtt_subscriber
-LIBS:=-lmosquitto -largp -luci -lcurl -ljson-c -lsqlite3
+LIBS:=-lmosquitto -largp -luci -lcurl -ljson-c -lsqlite3 -ggdb3
 
 .PHONY: all clean
 

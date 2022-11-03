@@ -105,14 +105,16 @@ int main(int argc, char **argv)
 	if( head == NULL )
 		goto end_free_context;
 	set_event_head(&event_head);
-	//json
-	//check_for_events(NULL, NULL);
+
+	rc = setup_email_config();
+	if( rc )
+		goto end_free_context;
 
 	//connect to broker
     rc = setup_mqtt(&mosq, arguments.host, arguments.port, arguments.username,
 					arguments.password, arguments.ca_file, arguments.use_tls);
     if( rc )
-        goto end_free_context;
+        goto end_free_email_context;
 
 	rc = subscribe_to_topics(mosq, head);
 	if( rc )
@@ -151,6 +153,8 @@ int main(int argc, char **argv)
 		mosquitto_disconnect(mosq);
 		mosquitto_destroy(mosq);
 		mosquitto_lib_cleanup();
+	end_free_email_context:
+		free_email_config();
 	end_free_context:	
 		uci_free_context(context);
 		free_all_topic_nodes(&head);

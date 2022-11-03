@@ -2,7 +2,11 @@
 
 #define EMAIL_CONFIG "user_groups"
 
-struct event_node **head;
+static struct event_node **head;
+static struct uci_context *context;
+static struct uci_package *package;
+
+
 
 static int check_char(const char *var, enum operator operator, char *val)
 {
@@ -39,6 +43,21 @@ static int check_int(int var, enum operator operator, int val)
     }
 }
 
+int setup_email_config()
+{
+    int rc = 0;
+    rc = uci_setup(&context, &package, EMAIL_CONFIG);
+    if( rc ){
+        syslog(LOG_ERR, "Failed to setup email config");
+        if( context )
+            uci_free_context(context);
+    }
+    return rc;
+}
+void free_email_config()
+{
+    uci_free_context(context);
+}
 
 void set_event_head(struct event_node **event_head)
 {
@@ -54,6 +73,7 @@ void check_for_events(char *topic, char *message)
     json_object *j;
     int check = 0;
     int rc = 0;
+    
     while ( tmp != NULL ){
         if( !strcmp(tmp->topic, topic) ){
             j = json_object_object_get(jobj, tmp->parameter);
@@ -70,27 +90,17 @@ void check_for_events(char *topic, char *message)
                 }
                 if(check){
                     struct sender *sender = (struct sender *)malloc(sizeof(struct sender));
-                    struct uci_context *context;
-                    struct uci_package *package;
+                    
                     int rc = 0;
-                    rc = uci_setup(&context, &package, EMAIL_CONFIG);
-                    if( rc ){
-                        syslog(LOG_ERR, "Failed to setup qmail config");
-                        if( context )
-                            uci_free_context(context);
-                        goto free_pointer;
-                    }
                     rc = uci_get_sender_info(context, package, &sender, tmp->email);
                     if( rc ){
                         syslog(LOG_ERR, "Didn't find email params in config");
-                        goto free_context;
+                        goto free_sender_pointer;
                     }
                     rc = send_mail(sender, tmp->receiver, tmp->topic, 
                                     tmp->parameter, tmp->expected_value, tmp->operator);
-                    syslog(LOG_DEBUG, "PREFREE");
-                    free_context:
-                        uci_free_context(context);
-                    free_pointer:
+                        
+                    free_sender_pointer:
                         free(sender);
                     
                         if( rc )
