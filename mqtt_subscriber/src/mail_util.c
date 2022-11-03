@@ -17,8 +17,6 @@ static void build_message(char *topic, char *argument, char *expected_value,
           "To: %s\r\n"
           "From: %s\r\n"
           "Cc: \r\n"
-          "Message-ID: <dcd7cb36-11db-487a-9f3a-e652a9458efd@"
-          "rfcpedant.example.org>\r\n"
           "Subject: \"%s\" topic event\r\n"
           "\r\n" 
           "Event: %s %s %s.\r\n"
