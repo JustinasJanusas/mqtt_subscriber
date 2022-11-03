@@ -37,7 +37,6 @@ struct arguments{
 
 static error_t parse_opt (int key, char *arg, struct argp_state *state)
 {
-	syslog(LOG_DEBUG, "%c\n", key);
 	struct arguments *arguments = state->input;
 	switch ( key ){
 

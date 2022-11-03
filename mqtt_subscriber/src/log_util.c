@@ -12,7 +12,7 @@ static int run_single_query(char *query, int argc, char *argv[])
 			-1, &res, 0);
 	if (rc != SQLITE_OK) {
         
-        	fprintf(stderr, "Failed to execute query: %s\n", sqlite3_errmsg(db_con));
+        	syslog(LOG_ERR, "Failed to execute query: %s\n", sqlite3_errmsg(db_con));
         	return rc;
 	}    
 	for(int i = 0; i < argc; i++){
