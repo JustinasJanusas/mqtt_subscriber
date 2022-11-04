@@ -20,7 +20,7 @@ static struct argp_option options[] = {
 	{"username", 'u', "username", 0, "Username"},
 	{"password", 'P', "password", 0, "Password"},
 	{"ca_file", 'c', "ca_file", 0, "CA file"}, 
-	{"use_tls", 't', 0, ARGP_NO_ARGS, "Use TLS"},
+	{"use_tls", 't', 0, 0, "Use TLS"},
     { 0 }
 };
 
