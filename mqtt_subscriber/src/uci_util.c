@@ -3,6 +3,26 @@
 #include <string.h>
 
 
+static void handle_strings(struct uci_context *context, struct uci_section *section,
+                            char *name, int len, char *var)
+{
+    if(uci_lookup_option(context, section, name)){
+        strncpy(var, uci_lookup_option(context, section, name)->v.string, len);
+    }
+} 
+
+
+static void handle_int(struct uci_context *context, struct uci_section *section,
+                            char *name, int *var)
+{
+    if(uci_lookup_option(context, section, name)){
+        *var = atoi(uci_lookup_option(context, section, name)->v.string);
+    }
+    else{
+        *var = -1;
+    }
+} 
+
 
 int uci_setup(struct uci_context **context,
             struct uci_package **package, char * config_name)
@@ -40,33 +60,28 @@ void uci_parse(struct uci_context *context, struct uci_package *package,
     char expected_value[20];
     char email[40];
     char receiver[40];
+    char temp[5];
     uci_foreach_element(&package->sections, i){
         struct uci_section *section = uci_to_section(i);
         char *section_type = section->type;
         if( !strcmp(section_type, "topic") ){
-            strncpy(name, uci_lookup_option(context, section, "topic")->v.string, 40);
-            qos = atoi(uci_lookup_option(context, section, "qos")->v.string);
-            if( name && ( qos || qos == 0 ) ){
+            handle_strings(context, section, "topic", 40, name);
+            handle_int(context, section, "qos", &qos);
+            if( name && (qos >= 0 && qos < 3 ) ){
                 tmp = create_topic_node(name, qos);
                 add_new_topic_node(head, tmp);
             }
         }
         else if( !strcmp(section_type, "event")){
-            strncpy(topic, 
-                    uci_lookup_option(context, section, "topic")->v.string, 40);
-            strncpy(parameter, 
-                    uci_lookup_option(context, section, "parameter")->v.string, 20);
-            type = atoi(uci_lookup_option(context, section, "type")->v.string);
-            operator = atoi(uci_lookup_option(context, section, "operator")->v.string);
-            strncpy(expected_value, 
-                    uci_lookup_option(context, section, "expected_value")->v.string, 
-                    20);
-            strncpy(email, uci_lookup_option(context, section, "email")->v.string,
-                    40);
-            strncpy(receiver, uci_lookup_option(context, section, "receiver")->v.string,
-                    40);
-            if( topic && parameter && ( type || type == 0 )  && 
-                (operator || operator == 0 ) &&
+            handle_strings(context, section, "topic", 40, topic);
+            handle_strings(context, section, "parameter", 10, parameter);
+            handle_int(context, section, "type", &type);
+            handle_int(context, section, "operator", &operator);
+            handle_strings(context, section, "expected_value", 20, expected_value);
+            handle_strings(context, section, "email", 40, email);
+            handle_strings(context, section, "receiver", 20, receiver);
+            if( topic && parameter && ( type >= 0 && type < 2)  && 
+                (operator >= 0 && operator < 6) &&
                 expected_value && email && receiver){
                 event_tmp = create_event_node(topic, parameter, type, operator,
                                             expected_value, email, receiver);
