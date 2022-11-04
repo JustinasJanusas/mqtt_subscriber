@@ -5,9 +5,8 @@
 #include "mqtt_control.h"
 
 #define CONFIG_NAME "mqtt_subscriber"
-#define FILE_PATH "/tmp/subscribe.txt"
 
-volatile sig_atomic_t deamonize = 1;
+volatile sig_atomic_t daemonize = 1;
 
 const char *argp_program_version =  "mqtt_subscriber 1.0.0";
 const char *argp_program_bug_address =  "<bug-gnu-utils@gnu.org>";
@@ -69,7 +68,7 @@ static struct argp argp = { options, parse_opt, 0, doc };
 
 static void term_proc(int sigterm) 
 {
-	deamonize = 0;
+	daemonize = 0;
 }
 
 int main(int argc, char **argv)
@@ -85,11 +84,11 @@ int main(int argc, char **argv)
 	struct arguments arguments;
 	struct topic_node *head = NULL;
 	struct event_node *event_head = NULL;
-	FILE *file;
 	//set sigaction
 	memset(&action, 0, sizeof(struct sigaction));
 	action.sa_handler = term_proc;
 	sigaction(SIGTERM, &action, NULL);
+	sigaction(SIGINT, &action, NULL);
 
 	//parse args
 	argp_parse(&argp, argc, argv, 0, 0, &arguments);
@@ -136,16 +135,9 @@ int main(int argc, char **argv)
         goto end_close_message_log;
     }
     syslog(LOG_INFO, "mqtt_subscriber started successfully");
-
+	
 	//method
-	while( deamonize ) {
-		if( !file ){
-			file = freopen(FILE_PATH, "a", stdout);
-			if( !file ){
-				syslog(LOG_ERR, "Failed to open the file");
-				goto end_destroy_mosquitto;
-			}
-		}
+	while( daemonize ) {
 		sleep(1);
 	}
 

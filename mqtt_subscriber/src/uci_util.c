@@ -13,7 +13,6 @@ int uci_setup(struct uci_context **context,
 		syslog(LOG_ERR, "Failed to create uci context");
         return 1;
 	}
-
     rc = uci_load(*context, config_name, package);
     if( rc ){
         syslog(LOG_ERR, "Failed to load config file: %d", rc);
