@@ -23,7 +23,7 @@ struct event_node* create_event_node(char *topic, char *parameter, int type,
     strncpy(node->parameter, parameter, 20);
     node->type = type;
     node->operator = operator;
-    strncpy(node->expected_value, expected_value, 20);
+    strncpy(node->expected_value, expected_value, 1000);
     strncpy(node->email, email, 40);
     strncpy(node->receiver, receiver, 40);
     

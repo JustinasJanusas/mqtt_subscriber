@@ -57,7 +57,7 @@ void uci_parse(struct uci_context *context, struct uci_package *package,
     char parameter[20];
     int type;
     int operator;
-    char expected_value[20];
+    char expected_value[1000];
     char email[40];
     char receiver[40];
     char temp[5];
@@ -77,7 +77,7 @@ void uci_parse(struct uci_context *context, struct uci_package *package,
             handle_strings(context, section, "parameter", 10, parameter);
             handle_int(context, section, "type", &type);
             handle_int(context, section, "operator", &operator);
-            handle_strings(context, section, "expected_value", 20, expected_value);
+            handle_strings(context, section, "expected_value", 1000, expected_value);
             handle_strings(context, section, "email", 40, email);
             handle_strings(context, section, "receiver", 20, receiver);
             if( topic && parameter && ( type >= 0 && type < 2)  && 
@@ -127,6 +127,7 @@ static void parse_sender_config(struct uci_context *context, struct uci_package 
 int uci_get_sender_info(struct uci_context *context, struct uci_package *package,
                         struct sender **sender, char *name)
 {
+    syslog(LOG_DEBUG, "%s", name);
     struct uci_element *i, *j;
     uci_foreach_element(&package->sections, i){
         struct uci_section *section = uci_to_section(i);

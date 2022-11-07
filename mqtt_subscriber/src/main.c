@@ -1,10 +1,12 @@
 #include <signal.h>
 #include <unistd.h>
 #include <argp.h>
+#include <fcntl.h>
 
 #include "mqtt_control.h"
 
 #define CONFIG_NAME "mqtt_subscriber"
+#define LOCK_FILE "/tmp/lock/procd_mqtt_subscriber.lock" 
 
 volatile sig_atomic_t daemonize = 1;
 
@@ -74,7 +76,24 @@ static void term_proc(int sigterm)
 int main(int argc, char **argv)
 {
 	openlog("mqtt_subscriber", LOG_PID, LOG_USER);
-
+	struct flock lock, savelock;
+	int fd;
+	fd = open(LOCK_FILE, O_RDWR | O_CREAT);
+	lock.l_type = F_WRLCK;
+	lock.l_start = 0;
+	lock.l_whence = SEEK_SET;
+	lock.l_len = 0;
+	savelock = lock;
+	fcntl(fd, F_GETLK, &lock);
+	if (lock.l_type == F_WRLCK){
+		syslog(LOG_DEBUG, "Another instance of MQTT_SUBSCRIBER is running: %d.\n",
+				lock.l_pid);
+		goto end_close_log;
+	}
+	else{
+		fcntl(fd, F_SETLK, &savelock);
+		
+	}
 	//arguments
 	int rc = 0;
     struct mosquitto *mosq = NULL;
@@ -118,10 +137,7 @@ int main(int argc, char **argv)
         goto end_free_email_context;
 	}
 
-	rc = subscribe_to_topics(mosq, head);
-	if( rc ){
-		goto end_destroy_mosquitto;
-	}
+	
 
 	rc = init_log();
 	if( rc ){
@@ -135,11 +151,45 @@ int main(int argc, char **argv)
         goto end_close_message_log;
     }
     syslog(LOG_INFO, "mqtt_subscriber started successfully");
-	
+	int counter = 0;
 	//method
-	while( daemonize ) {
+	while( !is_connected() ){
+		counter++;
+		if( counter > 20 ){
+			syslog(LOG_ERR, "Couldn't connect to broker");
+			daemonize = 0;
+			break;
+		}
 		sleep(1);
 	}
+	counter = 0;
+	while( daemonize ) {
+		if( is_not_subscribed() ){
+			rc = subscribe_to_topics(mosq, head);
+			if( !rc ){
+				set_subscribed_flag(0);
+			}
+		}
+		if( !is_connected() ){
+			counter++;
+			rc = mosquitto_reconnect(mosq);
+			if(rc){
+				syslog(LOG_INFO, "Failed to reconnect to broker: %d", rc);
+			}
+			else{
+				syslog(LOG_INFO, "Reconnected successfully");
+				counter = 0;
+			}
+		}
+		else{
+			counter = 0;
+		}
+		if(counter > 9){
+			break;
+		}
+		sleep(10);
+	}
+	
 
 	//close
 	mosquitto_loop_stop(mosq, true);
@@ -157,6 +207,7 @@ int main(int argc, char **argv)
 		free_all_event_nodes(&event_head);
 	end_close_log:
 		syslog(LOG_INFO, "mqtt_subscriber was stopped");
+		close(fd);
 		closelog();
 	return rc;
 }

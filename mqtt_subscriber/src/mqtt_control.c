@@ -1,5 +1,22 @@
 #include "mqtt_control.h"
 
+static int connection_flag = 0;
+static int subscribe_flag = 0;
+
+int is_connected()
+{
+    return connection_flag;
+}
+
+int is_not_subscribed()
+{
+    return subscribe_flag;
+}
+
+void set_subscribed_flag(int n)
+{
+    subscribe_flag = n;
+}
 
 static void on_message(struct mosquitto *mosq, void *obj, const struct mosquitto_message *msg)
 {
@@ -9,6 +26,19 @@ static void on_message(struct mosquitto *mosq, void *obj, const struct mosquitto
         syslog(LOG_ERR, "Failed to save message to log: %d", rc);
     }
     check_for_events(msg->topic, msg->payload);
+}
+
+static void on_connect(struct mosquitto *mosq, void * pt, int rc)
+{
+    syslog(LOG_INFO, "MQTT_SUBSCRIBER connected to broker");
+    connection_flag = 1;
+    subscribe_flag = 1;
+}
+
+static void on_disconnect(struct mosquitto *mosq, void * pt, int rc, const mosquitto_property *props)
+{
+    syslog(LOG_INFO, "MQTT_SUBSCRIBER lost connection to broker");
+    connection_flag = 0;
 }
 
 static void mosquitto_log_callback(struct mosquitto *mosq, void *userdata, int level, 
@@ -40,6 +70,8 @@ int setup_mqtt(struct mosquitto **mosq, char *address, int port, char *username,
     }
     mosquitto_log_callback_set(*mosq, mosquitto_log_callback);
     mosquitto_message_callback_set(*mosq, on_message);
+    mosquitto_disconnect_callback_set(*mosq, on_disconnect);
+    mosquitto_connect_callback_set(*mosq, on_connect);
     if( username ){
         rc = mosquitto_username_pw_set(*mosq, username, password);
         if(rc){
@@ -53,7 +85,7 @@ int setup_mqtt(struct mosquitto **mosq, char *address, int port, char *username,
             goto error_destroy;
         }
     }
-    rc = mosquitto_connect(*mosq, address, port, 60);
+    rc = mosquitto_connect(*mosq, address, port, 30);
     if( rc ){
         syslog(LOG_ERR, "Failed to connect to broker: %d", rc);
         goto error_destroy;

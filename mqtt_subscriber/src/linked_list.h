@@ -16,7 +16,7 @@ struct event_node{
     char parameter[20];
     int type;
     enum operator operator;
-    char expected_value[20];
+    char expected_value[1000];
     char email[40];
     char receiver[40];
     struct event_node *next;
