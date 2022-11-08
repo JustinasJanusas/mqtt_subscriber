@@ -7,7 +7,8 @@ struct topic_node* create_topic_node(char *name, int qos)
     struct topic_node *node;
     node = (struct topic_node*) malloc(sizeof(struct topic_node));
     node->next = NULL;
-    strncpy(node->name, name, 40);
+    strncpy(node->name, name, 39);
+    node->name[39] = '\0';
     node->qos = qos;
     return node;
 }
@@ -19,14 +20,18 @@ struct event_node* create_event_node(char *topic, char *parameter, int type,
     struct event_node *node;
     node = (struct event_node*) malloc(sizeof(struct event_node));
     node->next = NULL;
-    strncpy(node->topic, topic, 40);
-    strncpy(node->parameter, parameter, 20);
+    strncpy(node->topic, topic, 39);
+    node->topic[39] = '\0';
+    strncpy(node->parameter, parameter, 19);
+    node->parameter[19] = '\0';
     node->type = type;
     node->operator = operator;
-    strncpy(node->expected_value, expected_value, 1000);
-    strncpy(node->email, email, 40);
-    strncpy(node->receiver, receiver, 40);
-    
+    strncpy(node->expected_value, expected_value, 999);
+    node->expected_value[999] = '\0';
+    strncpy(node->email, email, 39);
+    node->email[39] = '\0';
+    strncpy(node->receiver, receiver, 39);
+    node->receiver[39] = '\0';
     return node;
 }
 

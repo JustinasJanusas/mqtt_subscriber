@@ -75,7 +75,6 @@ void check_for_events(char *topic, char *message)
     json_object *j;
     int check = 0;
     int rc = 0;
-
     while ( tmp != NULL ){
         if( !strcmp(tmp->topic, topic) ){
             j = json_object_object_get(jobj, tmp->parameter);
@@ -101,7 +100,6 @@ void check_for_events(char *topic, char *message)
                     }
                     rc = send_mail(sender, tmp->receiver, tmp->topic, 
                                     tmp->parameter, tmp->expected_value, tmp->operator);
-                        
                     free_sender_pointer:
                         free(sender);
                     

@@ -86,7 +86,7 @@ int main(int argc, char **argv)
 	savelock = lock;
 	fcntl(fd, F_GETLK, &lock);
 	if (lock.l_type == F_WRLCK){
-		syslog(LOG_DEBUG, "Another instance of MQTT_SUBSCRIBER is running: %d.\n",
+		syslog(LOG_ERR, "Another instance of MQTT_SUBSCRIBER is running: %d.\n",
 				lock.l_pid);
 		goto end_close_log;
 	}

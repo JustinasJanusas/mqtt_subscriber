@@ -7,7 +7,8 @@ static void handle_strings(struct uci_context *context, struct uci_section *sect
                             char *name, int len, char *var)
 {
     if(uci_lookup_option(context, section, name)){
-        strncpy(var, uci_lookup_option(context, section, name)->v.string, len);
+        strncpy(var, uci_lookup_option(context, section, name)->v.string, len-1);
+        var[len-1] = '\0';
     }
 } 
 
@@ -101,9 +102,11 @@ static void parse_sender_config(struct uci_context *context, struct uci_package 
         if( !strcmp(section_type, "email") ){
             if( !strcmp(name, uci_lookup_option(context, section, "name")->v.string)){
                 strncpy((*sender)->email, uci_lookup_option(context, section,
-                                                                "senderemail")->v.string, 50);
+                                                                "senderemail")->v.string, 49);
+                (*sender)->email[49] = '\0';
                 strncpy((*sender)->smtp_server, uci_lookup_option(context, section,
-                                                                "smtp_ip")->v.string, 50);
+                                                                "smtp_ip")->v.string, 49);
+                (*sender)->smtp_server[49] = '\0'; 
                 (*sender)->smtp_port = atoi(uci_lookup_option(context, section,
                                                                 "smtp_port")->v.string);
                 (*sender)->secure_conn = atoi(uci_lookup_option(context, section,
@@ -113,9 +116,11 @@ static void parse_sender_config(struct uci_context *context, struct uci_package 
                 if( (*sender)->credentials_enabled )
                 {
                     strncpy((*sender)->username, uci_lookup_option(context, section,
-                                                                "username")->v.string, 50);
+                                                                "username")->v.string, 49);
+                    (*sender)->username[49] = '\0';
                     strncpy((*sender)->password, uci_lookup_option(context, section,
-                                                                    "password")->v.string, 30);
+                                                                    "password")->v.string, 29);
+                    (*sender)->password[29] = '\0';
                 }
                 break;
             }
@@ -127,7 +132,6 @@ static void parse_sender_config(struct uci_context *context, struct uci_package 
 int uci_get_sender_info(struct uci_context *context, struct uci_package *package,
                         struct sender **sender, char *name)
 {
-    syslog(LOG_DEBUG, "%s", name);
     struct uci_element *i, *j;
     uci_foreach_element(&package->sections, i){
         struct uci_section *section = uci_to_section(i);
@@ -135,9 +139,11 @@ int uci_get_sender_info(struct uci_context *context, struct uci_package *package
         if( !strcmp(section_type, "email") ){
             if( !strcmp(name, uci_lookup_option(context, section, "name")->v.string)){
                 strncpy((*sender)->email, uci_lookup_option(context, section,
-                                                                "senderemail")->v.string, 50);
+                                                                "senderemail")->v.string, 49);
+                (*sender)->email[49] = '\0';
                 strncpy((*sender)->smtp_server, uci_lookup_option(context, section,
-                                                                "smtp_ip")->v.string, 50);
+                                                                "smtp_ip")->v.string, 49);
+                (*sender)->smtp_server[49] = '\0';
                 (*sender)->smtp_port = atoi(uci_lookup_option(context, section,
                                                                 "smtp_port")->v.string);
                 (*sender)->secure_conn = atoi(uci_lookup_option(context, section,
@@ -146,9 +152,11 @@ int uci_get_sender_info(struct uci_context *context, struct uci_package *package
                                                                 "credentials")->v.string);
                 if( (*sender)->credentials_enabled ){
                     strncpy((*sender)->username, uci_lookup_option(context, section,
-                                                                "username")->v.string, 50);
+                                                                "username")->v.string, 49);
+                    (*sender)->username[49] = '\0';
                     strncpy((*sender)->password, uci_lookup_option(context, section,
-                                                                    "password")->v.string, 30);
+                                                                    "password")->v.string, 29);
+                    (*sender)->password[29] = '\0';
                 }
                 return 0;
             }

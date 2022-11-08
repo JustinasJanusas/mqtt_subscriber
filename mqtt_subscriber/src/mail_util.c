@@ -1,7 +1,7 @@
 #include "mail_util.h"
 
 
-static char payload_text[500];
+static char payload_text[2000];
 
 struct upload_status {
   size_t bytes_read;
@@ -10,7 +10,6 @@ struct upload_status {
 static void build_message(char *topic, char *argument, char *expected_value,
                     enum operator operator, char *sender, char *receiver)
 {
-   
   time_t t = time(NULL);
   struct tm tm = *localtime(&t);
   sprintf(payload_text, "Date: %d-%02d-%02d %02d:%02d:%02d\r\n"
@@ -47,7 +46,6 @@ static size_t payload_source(char *ptr, size_t size, size_t nmemb, void *userp)
  
     return len;
   }
- 
   return 0;
 }
 
@@ -70,32 +68,26 @@ int send_mail(struct sender *sender, char* receiver, char *topic, char *argument
 
     curl_easy_setopt(curl, CURLOPT_URL, server);
     curl_easy_setopt(curl, CURLOPT_PORT, sender->smtp_port);
-
     if( sender->secure_conn ){
       curl_easy_setopt(curl, CURLOPT_USE_SSL, (long)CURLUSESSL_ALL);
       curl_easy_setopt(curl, CURLOPT_CAPATH, "/etc/certificates/");
     }
 
     curl_easy_setopt(curl, CURLOPT_MAIL_FROM, sender->email);
-
     recipients = curl_slist_append(recipients, receiver);
     curl_easy_setopt(curl, CURLOPT_MAIL_RCPT, recipients);
  
     curl_easy_setopt(curl, CURLOPT_READFUNCTION, payload_source);
     curl_easy_setopt(curl, CURLOPT_READDATA, &upload_ctx);
     curl_easy_setopt(curl, CURLOPT_UPLOAD, 1L);
- 
 
     res = curl_easy_perform(curl);
- 
     if(res != CURLE_OK){
       syslog(LOG_ERR, "curl_easy_perform() failed: %s %d\n",
               curl_easy_strerror(res), res);
     }
     curl_slist_free_all(recipients);
- 
     curl_easy_cleanup(curl);
   }
- 
   return (int)res;
 }

@@ -35,7 +35,7 @@ static void on_connect(struct mosquitto *mosq, void * pt, int rc)
     subscribe_flag = 1;
 }
 
-static void on_disconnect(struct mosquitto *mosq, void * pt, int rc, const mosquitto_property *props)
+static void on_disconnect(struct mosquitto *mosq, void * pt, int rc)
 {
     syslog(LOG_INFO, "MQTT_SUBSCRIBER lost connection to broker");
     connection_flag = 0;
